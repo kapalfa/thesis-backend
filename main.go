@@ -10,6 +10,8 @@ import (
 
 func main(){
 	//run the script to create localhost.pem and localhost-key.pem
+	//git problems
+	// fmt.Println
 	cmd := exec.Command("sh", "-c", "sh ./createKey.sh")
 	err := cmd.Run()
 	if err != nil {	

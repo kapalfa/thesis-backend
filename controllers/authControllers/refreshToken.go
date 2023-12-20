@@ -1,4 +1,4 @@
- package controllers
+ package authControllers
 
  import (
  	"github.com/gofiber/fiber/v2"
@@ -36,7 +36,6 @@
 	accessToken := jwt.New(jwt.SigningMethodHS256)
 	claims := accessToken.Claims.(jwt.MapClaims)
 	claims["id"] = foundUser.Id
-	claims["name"] = foundUser.Name 
 	claims["exp"] = time.Now().Add(time.Minute*15).Unix() // 15 minutes
 	newToken, err := accessToken.SignedString([]byte(config.Config("ACCESS_TOKEN_SECRET")))
 	if err != nil {

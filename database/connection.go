@@ -10,7 +10,6 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-	//comments for push
 	var err error 
 	dsn := "host=localhost port=5432 user=postgres password=pass dbname=mydb sslmode=disable"
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -21,7 +20,7 @@ func ConnectDB() {
 
 	fmt.Println("Database connection successfully opened")
 
-	err = DB.AutoMigrate(&models.User{})	
+	err = DB.AutoMigrate(&models.User{}, &models.Project{}, &models.Access{})	
 	if err != nil {
 		fmt.Println("Could not migrate the database")
 	}

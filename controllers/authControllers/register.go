@@ -1,4 +1,4 @@
-package controllers
+package authControllers
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -11,7 +11,6 @@ func Register(c *fiber.Ctx) error {
 	
 	c.Set("Content-Type", "application/json")
 	type NewUser struct {
-		Name 		string `json:"name"`
 		Email 		string `json:"email"`
 	}
 	
@@ -31,7 +30,6 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't create user", "data": err})
 	}
 	newUser := NewUser{
-		Name: user.Name,
 		Email: user.Email,
 	}
 	return c.JSON(fiber.Map{"status": "success", "message": "Created user", "data": newUser})

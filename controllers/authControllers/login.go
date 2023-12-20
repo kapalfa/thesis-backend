@@ -1,4 +1,4 @@
-package controllers
+package authControllers
 
 import (
 	"errors"
@@ -41,7 +41,6 @@ func Login(c *fiber.Ctx) error {
 
 	type UserData struct {
 		Id 			uint 	`json:"id"`
-		Name 		string 	`json:"name"`
 		Email 		string 	`json:"email"`
 		Password 	string 	`json:"password"`
 		RefreshToken string `json:"refresh_token"`
@@ -57,7 +56,6 @@ func Login(c *fiber.Ctx) error {
 	} else {
 		userData = UserData{
 			Id: userModel.Id,
-			Name: userModel.Name,
 			Email: userModel.Email,
 			Password: userModel.Password,
 		}
@@ -71,7 +69,6 @@ func Login(c *fiber.Ctx) error {
 	accessToken := jwt.New(jwt.SigningMethodHS256)
 	claims := accessToken.Claims.(jwt.MapClaims)
 	claims["id"] = userData.Id
-	claims["name"] = userData.Name
 	claims["exp"] = time.Now().Add(time.Minute*15).Unix() // 15 minutes
 	token, err := accessToken.SignedString([]byte(config.Config("ACCESS_TOKEN_SECRET")))
 	if err != nil {
@@ -81,7 +78,6 @@ func Login(c *fiber.Ctx) error {
 	refreshToken := jwt.New(jwt.SigningMethodHS256)
 	claims = refreshToken.Claims.(jwt.MapClaims)
 	claims["id"] = userData.Id
-	claims["name"] = userData.Name
 	claims["exp"] = time.Now().Add(time.Hour).Unix() // 1 hour
 	rt, err := refreshToken.SignedString([]byte(config.Config("REFRESH_TOKEN_SECRET")))
 	if err != nil {

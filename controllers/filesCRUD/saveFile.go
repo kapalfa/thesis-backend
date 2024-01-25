@@ -1,50 +1,85 @@
 package filesCRUD 
 
 import (
- 	"github.com/gofiber/fiber/v2"
-	"os"	
+	"fmt"
+	"io"
+	"os"
+	"net/http"
+	"encoding/json"
 )
 
-func SaveFile(c *fiber.Ctx) error {
-	path := c.Params("*")
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "File does not exist"})
-	}	
+// func SaveFile(c *fiber.Ctx) error {
+// 	path := c.Params("*")
+// 	if _, err := os.Stat(path); os.IsNotExist(err) {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "File does not exist"})
+// 	}	
 	
-	  // Parse the multipart form:
-	//if form, err := c.MultipartForm(); err == nil {
-	//	file := form.File["file"][0]
-	//	fmt.Println("file", file)
-	//}
-	file, err := c.FormFile("file")
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on file upload", "data": err})
-	}
+// 	file, err := c.FormFile("file")
+// 	if err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on file upload", "data": err})
+// 	}
+// 	err = c.SaveFile(file, path)
+// 	if err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on file upload", "data": err})
+// 	}
 	
-	err = c.SaveFile(file, path)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on file upload", "data": err})
-	}
-	//err = c.SaveFile(file, path + "/" + filename)
-	//if err != nil {
-	//	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on file upload", "data": err})
-	//}
-	//var input map[string]interface{}
-	//err := c.BodyParser(&input)
-	//if err != nil {
-	//	return c.Status(400).JSON(fiber.Map{"status": "error", "message": "Couldn't save file", "data": err})
-	//}
-	// file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0644)
-	// if err != nil {
-	// 	return c.Status(400).JSON(fiber.Map{"status": "error", "message": "Couldn't save file", "data": err})
-	// }
-	// defer file.Close()
+// 	fileContent, err := file.Open()
+// 	if err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on file upload", "data": err})
+// 	}
+// 	defer fileContent.Close()
+// 	content, err := io.ReadAll(fileContent)
+// 	if err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Error on file upload", "data": err})
+// 	}
 
-	// err = os.WriteFile(path, input, 0644)
-	//encoder := json.NewEncoder(file)
-	//err = encoder.Encode(input)
-	// if err != nil {
-	// 	return c.Status(400).JSON(fiber.Map{"status": "error", "message": "Couldn't save file", "data": err})
-	// }
-	return c.JSON(fiber.Map{"status": "success", "message": "Saved file"})
+// 	fmt.Println(string(content))	
+// 	return c.JSON(fiber.Map{"status": "success", "message": "Saved file", "data": string(content)})
+// }
+
+func SaveFile(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path[len("/api/saveFile/"):]
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+//	r.ParseMultipartForm(10 << 20)
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		fmt.Println("Error Retrieving the File: ", file)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	tempFile, err := os.Create(path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer tempFile.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tempFile.Write(fileBytes)
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"status": "success",
+		"message": "Saved file",
+		"data": string(content),
+	}
+
+	jsonResponse, _ := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }

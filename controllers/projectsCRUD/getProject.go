@@ -1,21 +1,25 @@
 package projectsCRUD
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"encoding/json"
 	"github.com/kapalfa/go/database"
 	"github.com/kapalfa/go/models"
+	"github.com/gorilla/mux"
+	"net/http"
+	"fmt"
 )
 
-func GetProject(c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	//check if the user has access to this project
-
+func GetProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
 	var project models.Project
+
+	fmt.Println("get project with id : ", id)
 
 	database.DB.Where("id = ?", id).First(&project)
 
-	return c.JSON(project)
+	fmt.Println("project : ", project)
+	json.NewEncoder(w).Encode(project)
 
 }
  

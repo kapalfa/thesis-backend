@@ -1,1 +1,0 @@
-{"content":"package config\n\nimport (\n\t\"fmt\"\n\t\"os\"\n\n\t\"github.com/joho/godotenv\"\n)\n\nfunc Config(key string) string {\n\terr := godotenv.Load(\".env\")\n\tif err != nil {\n\t\tfmt.Println(\"Error loading .env file\")\n\t}\n\treturn os.Getenv(key)\n}niuefls"}

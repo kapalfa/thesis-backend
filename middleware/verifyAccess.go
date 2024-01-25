@@ -1,20 +1,22 @@
 package middleware
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"github.com/kapalfa/go/database"
 	"github.com/kapalfa/go/models"
+	"github.com/gorilla/mux"
+	"net/http"
 )
 
-func VerifyAccess() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		userId := c.Locals("user")
-		projectId := c.Params("id")
+func VerifyAccess() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userId := r.Context().Value("user")
+		projectId := mux.Vars(r)["id"]
 		var access models.Access
 		err := database.DB.Model(&models.Access{}).Where("user_id = ? AND project_id = ?", userId, projectId).First(&access).Error
 		if err != nil {
-			return c.Status(401).JSON(fiber.Map{"status": "error", "message": "Unauthenticated"}) 
+			http.Error(w, "Unauthenticated", http.StatusUnauthorized) 
+			return
 		}
-		return c.Next()
-	}
+		next.ServeHTTP(w, r)
+	})
 }

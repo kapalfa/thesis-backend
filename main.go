@@ -19,6 +19,7 @@ func main(){
 	if err != nil {
 		log.Fatalf("Failed to run script: %v\n", err)
 	}
+	
 	database.ConnectDB()
 	r := mux.NewRouter()
 	origins := handlers.AllowedOrigins([]string{"https://localhost:5173"}) // env 

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func VerifyAccess() http.Handler {
+func VerifyAccess(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userId := r.Context().Value("user")
 		projectId := mux.Vars(r)["id"]

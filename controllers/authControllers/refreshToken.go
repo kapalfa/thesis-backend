@@ -8,6 +8,7 @@
  	"github.com/kapalfa/go/models"
  	"github.com/golang-jwt/jwt/v5"
  	"time"
+	"fmt"
  )
 
 //  func HandleRefreshToken(c *fiber.Ctx) error { 
@@ -46,6 +47,7 @@
 // }
 
 func HandleRefreshToken(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("REFRESHHHHHHHHHH")
 	cookie, err := r.Cookie("jwt")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]string{"token": "error"})

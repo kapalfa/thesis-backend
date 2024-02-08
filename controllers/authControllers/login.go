@@ -84,7 +84,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		accessToken := jwt.New(jwt.SigningMethodHS256)
 		claims := accessToken.Claims.(jwt.MapClaims)
 		claims["id"] = userData.Id
-		claims["exp"] = time.Now().Add(time.Minute*15).Unix() // 15 minutes
+		claims["exp"] = time.Now().Add(1*time.Minute).Unix() // 15 minutes
 		token, err := accessToken.SignedString([]byte(config.Config("ACCESS_TOKEN_SECRET")))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

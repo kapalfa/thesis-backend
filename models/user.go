@@ -5,5 +5,6 @@ type User struct {
 	Email    	 string `gorm:"unique" json:"email"`
 	Password 	 string `json:"password"`
 	RefreshToken string `json:"refresh_token"`
+	GithubToken  string `json:"github_token"`
 	Accesses 	 []Access `gorm:"foreignKey:UserId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"accesses"`
 }

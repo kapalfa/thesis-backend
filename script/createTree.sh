@@ -59,7 +59,7 @@ createTree() {
     done < <(ls -A "$dir")
 
     tree_content="[${tree_content%,}]"
-    #echo "$tree_content"
+    echo "$tree_content"
     local tree_sha=$(curl -L \
     -X POST \
     -H "Accept: application/vnd.github+json" \

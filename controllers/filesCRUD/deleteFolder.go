@@ -2,25 +2,33 @@ package filesCRUD
 
 import (
 	"net/http"
-	"os"
-	"log"
 	"github.com/gorilla/mux"
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/iterator"
+	"github.com/kapalfa/go/config"
 )
 
 func DeleteFolder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	path := vars["folderpath"]
 
-	log.Println("Deleting folder: ", path)
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		http.Error(w, "Folder does not exist", http.StatusBadRequest)
-		return
-	}
-
-	err := os.RemoveAll(path)
-	if err != nil {
-		http.Error(w, "Error deleting folder", http.StatusInternalServerError)
-		return
+	ctx := config.Ctx
+	bkt := config.Bucket
+	query := &storage.Query{Prefix: path}
+	it := bkt.Objects(ctx, query)
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if err := bkt.Object(attrs.Name).Delete(ctx); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Folder deleted successfully"))

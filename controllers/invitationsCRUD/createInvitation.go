@@ -1,37 +1,35 @@
-package invitationsCRUD 
+package invitationsCRUD
 
 import (
 	"encoding/json"
 	"log"
 	"net/http"
+
 	"github.com/kapalfa/go/database"
 	"github.com/kapalfa/go/models"
 )
 
-func CreateInvitation(w http.ResponseWriter, r* http.Request) {
-	type Req struct	{
+func CreateInvitation(w http.ResponseWriter, r *http.Request) {
+	type Req struct {
 		Email string `json:"email"`
-		Id int `json:"id"`
+		Id    int    `json:"id"`
 	}
 	var input Req
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		log.Println(err)
-		return 
-	}	
+		return
+	}
 
 	user := models.User{}
 	database.DB.First(&user, "email = ?", input.Email)
 
 	if user.Id == 0 {
-		log.Println("User not found")
-		return 
+		response := map[string]string{"message": "User not found"}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
+		return
 	}
-	//i, err := strconv.ParseUint(input.ProjectId, 10, 32)
-	//if err != nil {
-	//	log.Println(err)
-	//	return
-	//}
 	projid := uint(input.Id)
 	access := &models.Access{
 		UserId:    user.Id,
@@ -40,7 +38,15 @@ func CreateInvitation(w http.ResponseWriter, r* http.Request) {
 	}
 
 	if err := database.DB.Create(access).Error; err != nil {
-		log.Println("Could not create access on project")
+		if err.Error() == "UNIQUE constraint failed: accesses.user_id, accesses.project_id" {
+			response := map[string]string{"message": "User already has access to project"}
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+		response := map[string]string{"message": "Error creating access"}
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 }

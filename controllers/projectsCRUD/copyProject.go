@@ -1,55 +1,48 @@
 package projectsCRUD
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
+
+	"cloud.google.com/go/storage"
+	"github.com/kapalfa/go/config"
 	"github.com/kapalfa/go/database"
 	"github.com/kapalfa/go/models"
-	"os"
-	"strconv"
-	"encoding/json"
-	"io"
-	"path/filepath"
-	"io/fs"
+	"google.golang.org/api/iterator"
 )
+
 type CopyRequest struct {
 	ProjectId string `json:"projectid"`
-	UserId string `json:"userid"`
+	UserId    string `json:"userid"`
 }
-func copyDir(src string, dst string) error {
-	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+
+func copyDir(ctx context.Context, bucket *storage.BucketHandle, srcPrefix, dstPrefix string) error {
+	it := bucket.Objects(ctx, &storage.Query{Prefix: srcPrefix})
+
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
 			return err
 		}
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
+
+		srcObject := bucket.Object(attrs.Name)
+		dstObject := bucket.Object(strings.Replace(attrs.Name, srcPrefix, dstPrefix, 1))
+
+		if _, err := dstObject.CopierFrom(srcObject).Run(ctx); err != nil {
 			return err
 		}
-		dstPath := filepath.Join(dst, relPath)
-		if d.IsDir() {
-			return os.MkdirAll(dstPath, 0777)
-		}
-		srcFile,err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer srcFile.Close()
-		dstFile, err := os.Create(dstPath)
-		if err != nil {
-			return err 
-		}
-		defer dstFile.Close()
-		_, err = io.Copy(dstFile, srcFile)
-		if err != nil {
-			return err
-		}
-		info, err := d.Info()
-		if err != nil {
-			return err
-		}
-		return os.Chmod(dstPath, info.Mode())
-	})
-} 
+	}
+	return nil
+}
 func CopyProject(w http.ResponseWriter, r *http.Request) {
+	ctx := config.Ctx
+	bkt := config.Bucket
 	var req CopyRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -58,33 +51,25 @@ func CopyProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	project := &models.Project{}
-	if err := database.DB.Where("id = ?", req.ProjectId).First(project).Error; err != nil {
+	if err := database.DB.Where("id = ? AND public = ?", req.ProjectId, true).First(project).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	access := &models.Access{}
-	if err := database.DB.Where("user_id = ? AND project_id = ?",req.UserId, req.ProjectId).First(access).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	
-	newProject := &models.Project{	
-		Name: project.Name,
+	newProject := &models.Project{
+		Name:        project.Name,
 		Description: project.Description,
-		Public: false,
+		Public:      false,
 	}
 
 	if err := database.DB.Create(newProject).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := os.MkdirAll("./uploads/" + strconv.Itoa(int(newProject.Id)), 0755); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
-	if err := copyDir("./uploads/" + strconv.Itoa(int(project.Id)), "./uploads/" + strconv.Itoa(int(newProject.Id))); err != nil {
+	srcPrefix := req.ProjectId + "/"
+	dstPrefix := strconv.FormatUint(uint64(newProject.Id), 10) + "/"
+	if err := copyDir(ctx, bkt, srcPrefix, dstPrefix); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -105,10 +90,8 @@ func CopyProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "success",
+		"status":  "success",
 		"message": "Copied project",
-		"data": newProject,
+		"data":    newProject,
 	})
 }
-
-

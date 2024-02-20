@@ -3,34 +3,43 @@ package filesCRUD
 import (
 	"encoding/json"
 	"net/http"
+
 	"github.com/gorilla/mux"
-	"os"
+	"github.com/kapalfa/go/config"
 )
+
+type RequestFile struct {
+	Name string `json:"name"`
+}
 
 func CreateFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	path := vars["filepath"]
-	filename := struct {	
-		Filename string `json:"filename"`
-	}{}
-	json.NewDecoder(r.Body).Decode(&filename)
-	targetPath := path + "/" + filename.Filename
+	var file RequestFile
+	err := json.NewDecoder(r.Body).Decode(&file)
+	if err != nil {
+		http.Error(w, "Can't create file", http.StatusBadRequest)
+		return
+	}
 
-	if _, err := os.Stat(targetPath); !os.IsNotExist(err) {
+	targetPath := path + file.Name
+	bkt := config.Bucket
+	ctx := config.Ctx
+	obj := bkt.Object(targetPath)
+	_, err = obj.Attrs(ctx)
+	if err == nil {
 		response := map[string]interface{}{
-			"status": http.StatusBadRequest,
 			"message": "File already exists",
 		}
 		json.NewEncoder(w).Encode(response)
 		return
-	} else {
-		file, err := os.Create(targetPath)
-		if err != nil {
-			http.Error(w, "Error creating file", http.StatusInternalServerError)
-			return 
-		}
-		defer file.Close()
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("File created successfully"))
 	}
+
+	wc := obj.NewWriter(ctx)
+	if err := wc.Close(); err != nil {
+		http.Error(w, "Error creating file", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("File created successfully"))
 }

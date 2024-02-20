@@ -1,23 +1,23 @@
-package chat 
+package chat
 
 import (
 	"log"
 )
 
 type Room struct {
-	id 			string
-	clients 	map[*Client]bool
-	broadcast 	chan *Message
-	register 	chan *Client
-	unregister 	chan *Client
+	id         string
+	clients    map[*Client]bool
+	broadcast  chan *Message
+	register   chan *Client
+	unregister chan *Client
 }
 
 func NewRoom(id string) *Room {
 	return &Room{
-		id: id,
-		clients: make(map[*Client]bool),
-		broadcast: make(chan *Message),
-		register: make(chan *Client),
+		id:         id,
+		clients:    make(map[*Client]bool),
+		broadcast:  make(chan *Message),
+		register:   make(chan *Client),
 		unregister: make(chan *Client),
 	}
 }
@@ -33,7 +33,7 @@ func (room *Room) Run() {
 			log.Println("Client unregistered", client)
 		case message := <-room.broadcast:
 			for client := range room.clients {
-				client.send <- message.encode()
+				client.send <- message.encode(room)
 			}
 		}
 	}

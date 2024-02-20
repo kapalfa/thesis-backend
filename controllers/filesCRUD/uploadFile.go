@@ -2,22 +2,21 @@ package filesCRUD
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
+
+	"github.com/gorilla/mux"
+	"github.com/kapalfa/go/config"
 )
 
 func UploadFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	path := vars["filepath"]
 
-	if _, err := os.Stat(path); os.IsNotExist(err) { //kanonika den prepei na yparxei to path idi
-		os.MkdirAll(path, 0755)
-	}
+	ctx := config.Ctx
+	bkt := config.Bucket
 
-	r.ParseMultipartForm(10 << 20)
+	//r.ParseMultipartForm(10 << 20)
 	file, handler, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "Error retrieving the file", http.StatusBadRequest)
@@ -26,23 +25,23 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	filename := handler.Filename
-	targetPath := filepath.Join(path, filename)
-	if _, err := os.Stat(targetPath); !os.IsNotExist(err) {
+	targetPath := path + filename
+
+	obj := bkt.Object(targetPath)
+	_, err = obj.Attrs(ctx)
+	if err == nil {
 		response := map[string]interface{}{
-			"status": http.StatusBadRequest,
 			"message": "File already exists",
 		}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-	targetFile, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		http.Error(w, "Error creating file", http.StatusInternalServerError)
+	wc := obj.NewWriter(ctx)
+	if _, err := io.Copy(wc, file); err != nil {
+		http.Error(w, "Error saving the file", http.StatusInternalServerError)
 		return
 	}
-	defer targetFile.Close()
-
-	if _, err := io.Copy(targetFile, file); err != nil {
+	if err := wc.Close(); err != nil {
 		http.Error(w, "Error saving the file", http.StatusInternalServerError)
 		return
 	}

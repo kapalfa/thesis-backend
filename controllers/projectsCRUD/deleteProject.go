@@ -1,15 +1,19 @@
 package projectsCRUD
 
 import (
-	//"encoding/json"
 	"net/http"
+
+	"cloud.google.com/go/storage"
+	"github.com/gorilla/mux"
+	"github.com/kapalfa/go/config"
 	"github.com/kapalfa/go/database"
 	"github.com/kapalfa/go/models"
-	"github.com/gorilla/mux"
-	"os"
+	"google.golang.org/api/iterator"
 )
 
 func DeleteProject(w http.ResponseWriter, r *http.Request) {
+	ctx := config.Ctx
+	bkt := config.Bucket
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -22,12 +26,22 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := os.RemoveAll("./uploads/" + id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	dirName := id + "/"
+	it := bkt.Objects(ctx, &storage.Query{Prefix: dirName})
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		obj := bkt.Object(attrs.Name)
+		if err := obj.Delete(ctx); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-	
-	w.Header().Set("Content-Type", "application/json")
 	http.Error(w, "Deleted project", http.StatusOK)
-
 }

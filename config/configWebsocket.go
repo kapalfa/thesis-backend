@@ -1,17 +1,19 @@
-package config 
+package config
 
 import (
+	"bufio"
 	"encoding/json"
 	"log"
 	"net/http"
-	"os/exec"
-	"github.com/gorilla/websocket"
-	"github.com/creack/pty"
 	"os"
+	"os/exec"
 	"sync"
-	"bufio"
+
+	"github.com/creack/pty"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
+
 type shell struct {
 	cmd *exec.Cmd
 	tty *os.File
@@ -21,25 +23,27 @@ type Message struct {
 }
 type User struct {
 	conn *websocket.Conn
-	mu sync.Mutex
-	sh *shell
+	mu   sync.Mutex
+	sh   *shell
 }
 type UsersManager struct {
-	users map[string]*User
-	mu sync.Mutex
+	users       map[string]*User
+	mu          sync.Mutex
 	connections int
 }
+
 var Upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 var mutex = &sync.Mutex{}
 var um = NewUserManager()
+
 func startShell(projID string) *shell {
 	log.Println("Starting shell")
 	cmd := exec.Command("bash")
-	cmd.Dir = "./uploads/" + projID
+	//	cmd.Dir = projID
 	tty, err := pty.Start(cmd)
 	if err != nil {
 		log.Println("Error starting pty: ", err)
@@ -92,17 +96,7 @@ func (um *UsersManager) getOpenConnections() int {
 	defer um.mu.Unlock()
 	return um.connections
 }
-func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request){
-	// userid := path.Base(r.URL.Path)
-	// if userid == "" {
-	// 	log.Println("No user id provided")
-	// 	return
-	// }
-	// id, err := strconv.ParseUint(userid, 10, 32)
-	// if err != nil {
-	// 	log.Println("Error parsing user id: ", err)
-	// 	return
-	// }
+func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projID := vars["projId"]
 	userID := vars["userId"]
@@ -116,7 +110,7 @@ func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request){
 	um.addUser(userID, projID, conn)
 	defer um.removeUser(userID)
 
-	user:= um.getUser(userID)
+	user := um.getUser(userID)
 	if user == nil {
 		log.Println("Error getting user")
 		return
@@ -124,25 +118,25 @@ func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request){
 	log.Println("connections: ", um.getOpenConnections())
 	quit := make(chan struct{})
 	defer func() {
-	 	log.Println("Shell closed")
-	 	err = user.sh.cmd.Process.Kill()
-	 	if err != nil {
-	 		log.Println("Error killing process: ", err)
-	 	}
-	 	_, err = user.sh.cmd.Process.Wait()
+		log.Println("Shell closed")
+		err = user.sh.cmd.Process.Kill()
 		if err != nil {
-	 		log.Println("Error waiting for process: ", err)
-	 	}
-	 	err = user.sh.tty.Close()
-	 	if err != nil {
-	 		log.Println("Error closing tty: ", err)
-	 	}
-	 	user.sh = nil
-	 	quit <- struct{}{} // send signal to quit goroutine
+			log.Println("Error killing process: ", err)
+		}
+		_, err = user.sh.cmd.Process.Wait()
+		if err != nil {
+			log.Println("Error waiting for process: ", err)
+		}
+		err = user.sh.tty.Close()
+		if err != nil {
+			log.Println("Error closing tty: ", err)
+		}
+		user.sh = nil
+		quit <- struct{}{} // send signal to quit goroutine
 	}()
 	go func() {
 		scanner := bufio.NewScanner(user.sh.tty)
-	 	for { 
+		for {
 			select {
 			case <-quit:
 				log.Println("Quit channel received")
@@ -168,9 +162,9 @@ func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request){
 		_, p, err := conn.ReadMessage()
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 			log.Println("Websocket closed from client: ", err)
-			return			
+			return
 		}
-					
+
 		var msg Message
 		err = json.Unmarshal(p, &msg)
 		if err != nil {
@@ -178,7 +172,7 @@ func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request){
 			return
 		}
 		mutex.Lock()
-		_, err = user.sh.tty.WriteString(msg.LineContent+"\n")
+		_, err = user.sh.tty.WriteString(msg.LineContent + "\n")
 		if err != nil {
 			log.Println("Error writing to tty: ", err)
 			return

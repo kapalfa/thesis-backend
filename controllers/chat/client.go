@@ -39,14 +39,15 @@ func (client *Client) handleJoinRoomMessage(message Message) *Room {
 	}
 	return room
 }
-
-// func (client *Client) handleLeaveRoomMessage(message Message) {
-// 	roomId := message.Target
-	
-// 	//delete(client.rooms, room)
-	
-// 	room.unregister <- client
-// }
+func (client *Client) handleLeaveRoomMessage(message Message) {
+ 	roomId := message.RoomId
+	room := client.wsServer.GetRoom(roomId)
+	if room == nil {
+		return
+	}
+ 	//delete(client.rooms, room)
+	room.unregister <- client
+}
 func (client *Client) handleNewMessage(jsonMessage []byte) {
 	var message Message
 
@@ -56,7 +57,6 @@ func (client *Client) handleNewMessage(jsonMessage []byte) {
 		return
 	}
 
-	log.Println("Data: ", message)
 	//message.Sender = client
 	switch message.Action {
 	case sendMessageAction:
@@ -66,8 +66,8 @@ func (client *Client) handleNewMessage(jsonMessage []byte) {
 		}
 	case joinRoomAction:
 		client.handleJoinRoomMessage(message)
-	//case leaveRoomAction:
-	//	client.handleLeaveRoomMessage(message)
+	case leaveRoomAction:
+		client.handleLeaveRoomMessage(message)
 	}
 }
 

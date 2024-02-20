@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kapalfa/go/database"
 	"github.com/kapalfa/go/models"
+	"github.com/kapalfa/go/functions"
 )
 
 type Req struct {
@@ -17,9 +18,13 @@ func HandleInvitation(w http.ResponseWriter, r *http.Request) {
 	var req Req 
 	vars := mux.Vars(r)
 	projectid := vars["projectid"]
-	userid := vars["userid"]
-
-	err := json.NewDecoder(r.Body).Decode(&req)
+	
+	userid, err := functions.GetUserId(r.Header.Get("Authorization"))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Println(err)
 		return

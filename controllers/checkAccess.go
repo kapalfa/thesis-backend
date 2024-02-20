@@ -5,6 +5,7 @@ import (
 	"github.com/kapalfa/go/models"
 	"net/http"
 	"github.com/gorilla/mux"
+	"strings"
 )
 
 func VerifyAccess(w http.ResponseWriter, r *http.Request){

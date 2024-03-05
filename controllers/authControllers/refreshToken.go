@@ -2,6 +2,7 @@ package authControllers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -19,6 +20,7 @@ func HandleRefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("cookie in refresh: ", cookie)
 	var foundUser models.User
 	database.DB.Model(&models.User{RefreshToken: cookie.Value}).First(&foundUser)
 	if foundUser.Id == 0 {

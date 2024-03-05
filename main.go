@@ -19,8 +19,8 @@ func main() {
 	config.ConfigStorage()
 	r := mux.NewRouter()
 
-	allowedOrigins := []string{os.Getenv("FRONTEND_URL")}
-	origins := handlers.AllowedOrigins(allowedOrigins) // env
+	//allowedOrigins := []string{os.Getenv("FRONTEND_URL")}
+	origins := handlers.AllowedOrigins([]string{"*"}) // env
 	log.Println("FRONTEND_URL: ", os.Getenv("FRONTEND_URL"))
 	//origins := handlers.AllowedOrigins([]string{"*"})
 	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "PATCH"})

@@ -2,8 +2,6 @@ package authControllers
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -14,11 +12,10 @@ import (
 )
 
 func HandleRefreshToken(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("REFRESHHHHHHHHHH")
 	cookie, err := r.Cookie("jwt")
-	log.Println("cookie: ", cookie)
 	if err != nil {
-		json.NewEncoder(w).Encode(map[string]string{"token": "error"})
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "No JWT cookie found"})
 		return
 	}
 

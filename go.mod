@@ -11,7 +11,6 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.1
 	github.com/jackc/pgx/v5 v5.4.3
-	github.com/joho/godotenv v1.5.1
 	github.com/sendgrid/sendgrid-go v3.14.0+incompatible
 	golang.org/x/crypto v0.18.0
 	golang.org/x/oauth2 v0.16.0

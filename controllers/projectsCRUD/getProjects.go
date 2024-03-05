@@ -25,7 +25,7 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 	var projects []ProjectResponse
 	database.DB.Model(&models.Access{}).Where("user_id = ? AND status = ?", id, "accepted").Pluck("project_id", &projectIds)
 	if len(projectIds) == 0 {
-		json.NewEncoder(w).Encode(projects)
+		json.NewEncoder(w).Encode([]ProjectResponse{})
 		return
 	}
 	database.DB.Model(&models.Project{}).Where("id IN ?", projectIds).Select("Id", "Name", "Description", "Public").Find(&projects)

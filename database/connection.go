@@ -2,22 +2,23 @@ package database
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/kapalfa/go/migrations"
 	"github.com/kapalfa/go/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"github.com/kapalfa/go/migrations"
-	"os"
-	"github.com/joho/godotenv"
-);
+	//"github.com/joho/godotenv"
+)
 
 var DB *gorm.DB
 
 func ConnectDB() {
-	var err error 
-	err = godotenv.Load()
-	if err != nil {
-		fmt.Println("Error loading .env file")
-	}
+	var err error
+	//	err = godotenv.Load()
+	//	if err != nil {
+	//		fmt.Println("Error loading .env file")
+	//	}
 	dbport := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
@@ -39,7 +40,7 @@ func ConnectDB() {
 		fmt.Println("Could not migrate the database")
 		return
 	}
-	err = DB.AutoMigrate(&models.User{}, &models.Project{}, &models.Access{})	
+	err = DB.AutoMigrate(&models.User{}, &models.Project{}, &models.Access{})
 	if err != nil {
 		fmt.Println("Could not migrate the database")
 	}

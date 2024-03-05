@@ -110,13 +110,11 @@ func CommitGitRepo(w http.ResponseWriter, r *http.Request) {
 	)
 	oauthClient := oauth2.NewClient(context.Background(), tokenSource)
 	ghClient := github.NewClient(oauthClient)
-	log.Print("Creating tree")
 	tree, err := CreateGitTree(ghClient, accessToken, username, repo, branch, projectFolder)
 	if err != nil {
 		log.Printf("Error creating git tree: %v", err)
 		return
 	}
-	log.Println("Tree created: ", tree)
 
 	commit, _, err := ghClient.Git.CreateCommit(context.Background(), username, repo, &github.Commit{
 		Message: github.String("Initial commit"),
@@ -127,8 +125,6 @@ func CommitGitRepo(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error creating commit: %v", err)
 		return
 	}
-
-	log.Println("Commit created: ", commit)
 
 	ref, _, err := ghClient.Git.UpdateRef(context.Background(), username, repo, &github.Reference{
 		Ref: github.String("refs/heads/" + branch),

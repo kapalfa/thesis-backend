@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	"github.com/kapalfa/go/config"
 	"github.com/kapalfa/go/controllers/chat"
 	"github.com/kapalfa/go/database"
@@ -19,10 +18,7 @@ func main() {
 	database.ConnectDB()
 	config.ConfigStorage()
 	r := mux.NewRouter()
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
+
 	allowedOrigins := []string{os.Getenv("FRONTEND_URL")}
 	origins := handlers.AllowedOrigins(allowedOrigins) // env
 	log.Println("FRONTEND_URL: ", os.Getenv("FRONTEND_URL"))
@@ -47,7 +43,7 @@ func main() {
 	}
 
 	//err = http.ListenAndServeTLS(":"+port, "./mkcert/localhost.pem", "./mkcert/localhost-key.pem", r)
-	err = http.ListenAndServe(":"+port, r)
+	err := http.ListenAndServe(":"+port, r)
 	if err != nil && err != io.EOF {
 		log.Fatalf("Error listen: %v", err)
 	}

@@ -21,6 +21,7 @@ func main() {
 
 	allowedOrigins := []string{os.Getenv("FRONTEND_URL")}
 	origins := handlers.AllowedOrigins(allowedOrigins) // env
+	log.Println("allowedOrigins: ", allowedOrigins)
 	log.Println("FRONTEND_URL: ", os.Getenv("FRONTEND_URL"))
 	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "PATCH"})
 	headers := handlers.AllowedHeaders([]string{"Origin", "Content-Type", "Accept", "Authorization"})

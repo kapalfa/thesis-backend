@@ -15,6 +15,7 @@ import (
 func HandleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("jwt")
 	if err != nil {
+		log.Print("No JWT cookie found")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "No JWT cookie found"})
 		return

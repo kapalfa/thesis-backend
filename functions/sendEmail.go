@@ -10,7 +10,7 @@ import (
 )
 
 func SendEmail(email string, verificationToken string, emailType string) {
-	from := mail.NewEmail("online-code-editor", "androkosm2000@gmail.com")
+	from := mail.NewEmail("online-code-editor", os.Getenv("EMAIL_ADDRESS"))
 	to := mail.NewEmail("Example User", email)
 	var subject string
 	var plainTextContent string

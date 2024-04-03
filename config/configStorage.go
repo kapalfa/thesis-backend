@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"log"
+	"os"
 
 	"cloud.google.com/go/storage"
 )
@@ -17,6 +18,6 @@ func ConfigStorage() {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 	defer client.Close()
-	bucketName := "bucket-editor-files-1312"
+	bucketName := os.Getenv("BUCKET_NAME")
 	Bucket = client.Bucket(bucketName) //create a bucket instance
 }

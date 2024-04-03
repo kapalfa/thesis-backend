@@ -1,23 +1,29 @@
 package filesCRUD
 
 import (
-	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"os"
+	"io"
+	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/kapalfa/go/config"
 )
 
-func GetFile(c* fiber.Ctx) error {
-	path := c.Params("*")
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "File does not exist"})
-	}
-	fmt.Println("path", path)
-	//path := c.Query("path")
+func GetFile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	path := vars["filepath"]
+	bkt := config.Bucket
+	ctx := config.Ctx
+	obj := bkt.Object(path) // get an object handler
 
-	err := c.SendFile(path)
+	reader, err := obj.NewReader(ctx)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Could not read file", "data": err})
+		http.Error(w, "Error reading file", http.StatusInternalServerError)
+		return
 	}
+	defer reader.Close()
 
-	return nil
+	if _, err := io.Copy(w, reader); err != nil {
+		http.Error(w, "Error reading file", http.StatusInternalServerError)
+		return
+	}
 }

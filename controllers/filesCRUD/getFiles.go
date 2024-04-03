@@ -1,63 +1,63 @@
-package filesCRUD 
+package filesCRUD
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"os"
-	"path/filepath"
+	"encoding/json"
+	"net/http"
 	"strings"
+
+	"cloud.google.com/go/storage"
+	"github.com/gorilla/mux"
+	"github.com/kapalfa/go/config"
+	"google.golang.org/api/iterator"
 )
+
 type Dir struct {
-	Name string `json:"name"`
-	IsDir bool `json:"isDir"`
-	Filepath string `json:"filepath,omitempty"`
+	Name     string          `json:"name"`
+	IsDir    bool            `json:"isDir"`
+	Filepath string          `json:"filepath,omitempty"`
 	Children map[string]*Dir `json:"children"`
 }
 
-// get project directory 
-func GetFiles(c *fiber.Ctx) error { 
-	id := c.Params("id")
-	dirPath := "./uploads/" + id
+func GetFiles(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	dirPath := id + "/"
 	root := &Dir{Name: id, IsDir: true, Children: make(map[string]*Dir), Filepath: dirPath}
-	
-	entries, err := os.ReadDir(dirPath)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't get files", "data": err})
-	}
-	if len(entries) == 0 { // if the directory is empty
-		return c.JSON(root)
-	}
 
-	err = filepath.WalkDir(dirPath, func(path string, info os.DirEntry, err error) error {
-		if err != nil {
-			return err
+	ctx := config.Ctx
+	bkt := config.Bucket
+	query := &storage.Query{Prefix: dirPath}
+	it := bkt.Objects(ctx, query)
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
 		}
-	
-		relPath, err := filepath.Rel(dirPath, path)
 		if err != nil {
-			return err
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-
+		relPath := strings.TrimPrefix(attrs.Name, dirPath)
+		parts := strings.Split(relPath, string('/'))
 		currentDir := root
-		parts := strings.Split(relPath, string(os.PathSeparator))
 		for i, part := range parts {
-			if part == "." || part == ".." {
+			if part == "" {
 				continue
 			}
+			isDir := i != len(parts)-1
 			if _, ok := currentDir.Children[part]; !ok {
-				newDir := &Dir{Name: part, IsDir: info.IsDir(), Children: make(map[string]*Dir)}
-				newDir.Filepath = path
+				newDir := &Dir{Name: part, IsDir: isDir, Children: make(map[string]*Dir)}
+				newDir.Filepath = attrs.Name
 				currentDir.Children[part] = newDir
 			}
 			currentDir = currentDir.Children[part]
-
-			if i == len(parts)-1 && !info.IsDir() {
-				break
-			}
 		}
-		return nil
-	})
+	}
+	rootJson, err := json.Marshal(root)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Couldn't get files", "data": err})
-	}	
-	return c.JSON(root)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(rootJson)
 }

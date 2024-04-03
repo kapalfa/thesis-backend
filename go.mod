@@ -4,7 +4,6 @@ go 1.21.3
 
 require (
 	cloud.google.com/go/storage v1.38.0
-	github.com/creack/pty v1.1.21
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/gorilla/handlers v1.5.2

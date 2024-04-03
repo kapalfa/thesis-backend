@@ -103,7 +103,9 @@ func getContents(path, username, repoName, accessToken string, projectId uint, c
 }
 
 type Req struct {
-	RepoName string `json:"repoName"`
+	RepoName     string `json:"repoName"`
+	RepoDesc     string `json:"repoDesc"`
+	RepoIsPublic bool   `json:"repoIsPublic"`
 }
 
 func DownloadGitRepo(w http.ResponseWriter, r *http.Request) {
@@ -124,8 +126,8 @@ func DownloadGitRepo(w http.ResponseWriter, r *http.Request) {
 
 	project := &models.Project{ // create new project
 		Name:        myreq.RepoName,
-		Description: "test", // get from user
-		Public:      false,
+		Description: myreq.RepoDesc, // get from user
+		Public:      myreq.RepoIsPublic,
 	}
 	if err := database.DB.Create(project).Error; err != nil {
 		http.Error(w, "Couldn't create project", http.StatusInternalServerError)

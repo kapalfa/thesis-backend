@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/kapalfa/go/config"
 	"github.com/kapalfa/go/controllers/authControllers"
 	"github.com/kapalfa/go/controllers/filesCRUD"
 	"github.com/kapalfa/go/controllers/githubControllers"
@@ -13,7 +12,6 @@ import (
 	"github.com/kapalfa/go/middleware"
 )
 
-// app.Get("/api/getFiles/:id", middleware.VerifyJWT(), middleware.VerifyAccess(), filesCRUD.GetFiles)
 func Setup(r *mux.Router) {
 	// file routes
 	r.HandleFunc("/getFile/{filepath:.*}", filesCRUD.GetFile)
@@ -41,13 +39,10 @@ func Setup(r *mux.Router) {
 	r.HandleFunc("/getCollaborators/{id}/{userid}", projectsCRUD.GetCollaborators)
 	// github routes
 	r.HandleFunc("/github/login", githubControllers.GithubLoginHandler)
-	// r.HandleFunc("/github/callback", authControllers.LoginGithub).Use(middleware.GithubCallbackHandler)
 	r.Handle("/github/callback", middleware.GithubCallbackHandler(http.HandlerFunc(authControllers.LoginGithub)))
 	r.HandleFunc("/github/initRepo", githubControllers.InitGitRepo)
 	r.HandleFunc("/github/commitRepo", githubControllers.CommitGitRepo)
 	r.HandleFunc("/github/downloadRepo/{userid}", githubControllers.DownloadGitRepo)
-	// socket routes
-	r.HandleFunc("/sockets/projId={projId:[0-9]+}&userId={userId:[0-9]+}", config.HandleWebsocketConnection)
 	// invitation routes
 	r.HandleFunc("/createInvitation", invitationsCRUD.CreateInvitation)
 	r.HandleFunc("/getInvitations", invitationsCRUD.GetInvitations)

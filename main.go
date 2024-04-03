@@ -20,8 +20,7 @@ func main() {
 	r := mux.NewRouter()
 
 	allowedOrigins := []string{os.Getenv("FRONTEND_URL")}
-	origins := handlers.AllowedOrigins(allowedOrigins) // env
-	log.Println("allowedOrigins: ", allowedOrigins)
+	origins := handlers.AllowedOrigins(allowedOrigins)
 	log.Println("FRONTEND_URL: ", os.Getenv("FRONTEND_URL"))
 	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "PATCH"})
 	headers := handlers.AllowedHeaders([]string{"Origin", "Content-Type", "Accept", "Authorization"})
@@ -31,7 +30,6 @@ func main() {
 	routes.Setup(r)
 
 	wsServer := chat.NewWebsocketServer()
-	//go room.Run()
 	go wsServer.Run()
 
 	r.HandleFunc("/sockets/chat/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +40,6 @@ func main() {
 		port = "8080"
 	}
 
-	//err = http.ListenAndServeTLS(":"+port, "./mkcert/localhost.pem", "./mkcert/localhost-key.pem", r)
 	err := http.ListenAndServe(":"+port, r)
 	if err != nil && err != io.EOF {
 		log.Fatalf("Error listen: %v", err)

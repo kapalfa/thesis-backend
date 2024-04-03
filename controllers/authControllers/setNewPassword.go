@@ -2,7 +2,6 @@ package authControllers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -25,8 +24,6 @@ func SetNewPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.User
-	log.Print("new password : ", req.Password)
-	log.Print("reset token : ", req.Token)
 	database.DB.Where("reset_token = ?", req.Token).First(&user)
 	if user.Id == 0 {
 		response := map[string]interface{}{
@@ -51,7 +48,6 @@ func SetNewPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.Password = string(hashedPassword)
-	log.Print("new password : ", user.Password)
 	database.DB.Save(&user)
 	var myuser models.User
 	res := database.DB.Where("email = ?", user.Email).First(&myuser)
@@ -59,7 +55,6 @@ func SetNewPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error on set new password request", http.StatusInternalServerError)
 		return
 	}
-	log.Print("user : ", myuser)
 	response := map[string]interface{}{
 		"status":  "success",
 		"message": "Password updated",

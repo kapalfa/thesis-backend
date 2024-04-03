@@ -71,6 +71,9 @@ func CommitGitRepo(w http.ResponseWriter, r *http.Request) {
 	projectFolder := string(request.ProjectId) + "/" // project folder path
 	command := "https://api.github.com/repos/" + username + "/" + repo + "/commits"
 
+	log.Println("command ", command)
+	log.Print("projectFOlder: ", projectFolder)
+	log.Println("github token ", accessToken)
 	req, err = http.NewRequest("GET", command, nil)
 	if err != nil {
 		log.Printf("Error creating request: %v", err)
@@ -92,6 +95,7 @@ func CommitGitRepo(w http.ResponseWriter, r *http.Request) {
 	type Commit struct {
 		Sha string `json:"sha"`
 	}
+	log.Printf("Response: %s", string(b))
 	var commits []Commit
 	err = json.Unmarshal(b, &commits)
 	if err != nil {

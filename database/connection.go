@@ -8,17 +8,12 @@ import (
 	"github.com/kapalfa/go/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	//"github.com/joho/godotenv"
 )
 
 var DB *gorm.DB
 
 func ConnectDB() {
 	var err error
-	//	err = godotenv.Load()
-	//	if err != nil {
-	//		fmt.Println("Error loading .env file")
-	//	}
 	dbport := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
@@ -44,5 +39,4 @@ func ConnectDB() {
 	if err != nil {
 		fmt.Println("Could not migrate the database")
 	}
-
 }

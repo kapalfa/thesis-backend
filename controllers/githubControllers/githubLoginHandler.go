@@ -2,7 +2,6 @@ package githubControllers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -14,6 +13,5 @@ func GithubLoginHandler(w http.ResponseWriter, r *http.Request) {
 		"https://thesis-frontend-snowy.vercel.app/github/callback",
 		"randomString",
 	)
-	log.Println("redirect url: ", redirectURL)
 	w.Write([]byte(redirectURL))
 }

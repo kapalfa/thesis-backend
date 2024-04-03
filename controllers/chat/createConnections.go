@@ -1,17 +1,14 @@
 package chat
 
-import(
-	"net/http"
+import (
 	"log"
-	"github.com/gorilla/websocket"
+	"net/http"
+
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
 
 func (client *Client) read() {
-//	defer func() {
-		///client.wsServer.unregister <- client
-	//	client.conn.Close()
-//	}()
 	defer client.conn.Close()
 	for {
 		_, message, err := client.conn.ReadMessage()
@@ -19,7 +16,6 @@ func (client *Client) read() {
 			log.Printf("Error: %v", err)
 			return 
 		}
-		//client.room.broadcast <- message
 		client.handleNewMessage(message)
 	}
 }
@@ -37,7 +33,6 @@ var upgrader = &websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024, 
 func (wsServer *WsServer) CreateConnections(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	roomId := vars["projId"]
-	//userId := vars["id"]
 	room := wsServer.GetRoom(roomId)
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -50,9 +45,6 @@ func (wsServer *WsServer) CreateConnections(w http.ResponseWriter, r *http.Reque
 	client := NewClient(conn, room, wsServer)
 	log.Println("Client created: ", client)
 	room.register <- client
-
-	//wsServer.register <- client
-	//go wsServer.Run()
 
 	defer func() {
 		room.unregister <- client

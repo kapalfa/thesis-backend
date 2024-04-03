@@ -1,37 +1,33 @@
-package chat 
+package chat
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"log"
+
+	"github.com/gorilla/websocket"
 )
+
 type Client struct {
-	rooms map[*Room]bool
+	rooms    map[*Room]bool
 	wsServer *WsServer
-	conn *websocket.Conn
-	send chan []byte
-}
-func NewClient(conn *websocket.Conn, r *Room, wsServer *WsServer) *Client {
-	return &Client{
-		rooms: make(map[*Room]bool),
-		wsServer: wsServer,
-		conn: conn,
-		send: make(chan []byte, 256),
-	}
+	conn     *websocket.Conn
+	send     chan []byte
 }
 
-//func (client *models.User) disconnect() {
-// 	client.wsServer.unregister <- client
- 	//for room := range client.rooms {
- //		room.unregister <- client
-// 	}
-//}
+func NewClient(conn *websocket.Conn, r *Room, wsServer *WsServer) *Client {
+	return &Client{
+		rooms:    make(map[*Room]bool),
+		wsServer: wsServer,
+		conn:     conn,
+		send:     make(chan []byte, 256),
+	}
+}
 
 func (client *Client) handleJoinRoomMessage(message Message) *Room {
 	roomId := message.RoomId
 	room := client.wsServer.GetRoom(roomId)
 	if room == nil {
-			room = client.wsServer.createRoom(roomId)
+		room = client.wsServer.createRoom(roomId)
 	}
 	if !client.isInRoom(room) {
 		client.rooms[room] = true
@@ -40,12 +36,11 @@ func (client *Client) handleJoinRoomMessage(message Message) *Room {
 	return room
 }
 func (client *Client) handleLeaveRoomMessage(message Message) {
- 	roomId := message.RoomId
+	roomId := message.RoomId
 	room := client.wsServer.GetRoom(roomId)
 	if room == nil {
 		return
 	}
- 	//delete(client.rooms, room)
 	room.unregister <- client
 }
 func (client *Client) handleNewMessage(jsonMessage []byte) {
@@ -57,7 +52,6 @@ func (client *Client) handleNewMessage(jsonMessage []byte) {
 		return
 	}
 
-	//message.Sender = client
 	switch message.Action {
 	case sendMessageAction:
 		roomId := message.RoomId
@@ -74,6 +68,6 @@ func (client *Client) handleNewMessage(jsonMessage []byte) {
 func (client *Client) isInRoom(room *Room) bool {
 	if _, ok := client.rooms[room]; ok {
 		return true
-		}
-		return false
+	}
+	return false
 }

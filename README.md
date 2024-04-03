@@ -1,12 +1,12 @@
 # A web framework for collaborative code development
 This repository consists of the backend of my thesis "A web framework for collaborative code development"
 
-## What the application does?
+## What the application does
 
 The application creates a collaborative coding environment for developers. Every user who has an account in the app, can create projects and store their files there. 
 The app offers a code editor for editing and viewing purposes, a live chat between collaborators, GitHub integration and many more features.
 
-## Why did I use Go?
+## Why did I use Go
 
 - Performance: Go is a compiled language
 - Concurrency: Go has built-in support for concurrency through goroutines and channels
